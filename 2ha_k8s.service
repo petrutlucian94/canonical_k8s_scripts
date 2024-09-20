@@ -1,0 +1,14 @@
+[Unit]
+Description=K8s service wrapper handling Dqlite recovery for 2-node HA setups.
+After=network.target home-ubuntu-workspace.mount pacemaker.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+Type=oneshot
+ExecStart=/bin/bash /home/ubuntu/workspace/2ha_scripts/2ha.sh start_service
+ExecStop=/bin/bash sudo snap stop k8s
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

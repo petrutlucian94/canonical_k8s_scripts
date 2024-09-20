@@ -1,0 +1,8 @@
+[Unit]
+Description=K8s service wrapper handling failovers for 2-node HA setups. This service is supposed to be managed by Pacemaker and started on the primary once a failover occurs.
+After=network.target home-ubuntu-workspace.mount
+
+[Service]
+Type=oneshot
+ExecStart=systemctl restart 2ha_k8s
+RemainAfterExit=true
