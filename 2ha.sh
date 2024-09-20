@@ -228,7 +228,7 @@ function ensure_mount_rw() {
     fi
 }
 
-wait_drbd_promoted() {
+function wait_drbd_promoted() {
     log_message "Waiting for one of the DRBD nodes to be promoted."
 
     local pollInterval=2
@@ -539,6 +539,12 @@ function process_recovery_files_on_secondary() {
     scp $SSH_USERNAME@$peerIp:/var/snap/k8s/common/$lastK8sDqliteRecoveryTarball /tmp/
     sudo tar -xf /tmp/$lastK8sDqliteRecoveryTarball -C $K8S_DQLITE_STATE_DIR
 
+    log_message "Updating dqlite roles."
+    # Update info.yaml
+    set_dqlite_node_role $K8S_DQLITE_INFO_YAML $DQLITE_ROLE_SPARE
+    set_dqlite_node_role $K8SD_INFO_YAML $DQLITE_ROLE_SPARE
+    # We're skipping cluster.yaml, we expect the recovery archives to contain
+    # updated cluster.yaml files.
 }
 
 # Recover a former primary, now secondary dqlite node.
@@ -756,12 +762,6 @@ function main() {
     local command=$1
 
     case $command in
-        "promote_as_primary")
-            promote_as_primary
-            ;;
-        "rejoin_secondary")
-            rejoin_secondary
-            ;;
         "move_statedirs")
             move_statedirs
             ;;
@@ -787,10 +787,6 @@ Unknown command: $1
 usage: $0 <command>
 
 Commands:
-    promote_as_primary      Promote the current node as primary and prepare
-                            the recovery archives.
-    rejoin_secondary        Recover a former primary, now secondary dqlite node.
-                            Run "promote_as_primary" on the ther node first.
     move_statedirs          Move the dqlite state directories to the DRBD mount,
                             replacing them with symlinks.
                             The existing contents are moved to a backup folder,
